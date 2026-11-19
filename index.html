@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>חתימה על מסמכים</title>
+<title>חתימה על מסמך</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root { --ink:#1a2a8c; --bg:#f4f6fb; --card:#fff; --text:#1d2433; --muted:#6b7385; --ok:#1f9d55; --wa:#25d366; --line:#e3e7f0; }
@@ -55,7 +56,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>חתימה על מסמכים</h1>
+    <h1>חתימה על מסמך</h1>
     <p id="subtitle">כמה דקות, ישירות מהטלפון</p>
   </header>
   <div class="steps" id="stepsBar"><span></span><span></span><span></span><span></span></div>
@@ -63,23 +64,23 @@
   <!-- loading / fatal error -->
   <section id="s-load" class="card center">
     <div class="spinner"></div>
-    <div class="muted">טוען את המסמכים…</div>
+    <div class="muted">טוען את המסמך…</div>
   </section>
   <section id="s-fatal" class="card center hidden">
-    <div class="big">⚠️</div>
-    <h2>לא ניתן לפתוח את הקישור</h2>
+    <div class="big" id="fatalIcon">⚠️</div>
+    <h2 id="fatalTitle">לא ניתן לפתוח את הקישור</h2>
     <p class="muted" id="fatalMsg">ייתכן שהקישור לא שלם. בקשו קישור חדש מהשולח.</p>
   </section>
 
   <!-- step 1: read -->
   <section id="s-read" class="hidden">
     <div class="card">
-      <h2>1. עיון במסמכים</h2>
-      <p class="muted">לפניכם המסמכים לחתימה. אפשר לגלול ולקרוא אותם כאן.</p>
+      <h2>1. עיון במסמך</h2>
+      <p class="muted">לפניכם המסמך לחתימה. אפשר לפתוח ולקרוא אותו כאן.</p>
       <div id="docList"></div>
-      <button class="btn sec" id="toggleView">📄 הצגת המסמכים</button>
+      <button class="btn sec" id="toggleView">📄 הצגת המסמך</button>
       <div class="pages hidden" id="pages" dir="ltr"></div>
-      <label class="chk"><input type="checkbox" id="readOk"> קראתי את המסמכים ואני מאשר/ת את תוכנם</label>
+      <label class="chk"><input type="checkbox" id="readOk"> קראתי את המסמך ואני מאשר/ת את תוכנו</label>
       <button class="btn" id="toSign" disabled>המשך לחתימה</button>
     </div>
   </section>
@@ -97,11 +98,11 @@
         <div class="hint" id="padHint">✍️ חתמו כאן</div>
       </div>
       <div class="row">
-        <span class="muted" style="font-size:14px">החתימה תופיע על כל המסמכים</span>
+        <span class="muted" style="font-size:14px">החתימה תופיע בכל המקומות המסומנים</span>
         <button class="link" id="clearPad">ניקוי ↺</button>
       </div>
       <button class="btn" id="toPreview" disabled>המשך</button>
-      <button class="link" id="backRead" style="width:100%;margin-top:6px">→ חזרה למסמכים</button>
+      <button class="link" id="backRead" style="width:100%;margin-top:6px">→ חזרה למסמך</button>
     </div>
   </section>
 
@@ -109,7 +110,7 @@
   <section id="s-preview" class="hidden">
     <div class="card">
       <h2>3. בדיקה לפני שליחה</h2>
-      <p class="muted">כך ייראו המסמכים החתומים:</p>
+      <p class="muted">כך ייראה המסמך החתום:</p>
       <div class="pages" id="previewPages" dir="ltr"></div>
       <button class="btn" id="send">✔ אישור ושליחה</button>
       <button class="btn sec" id="backSign">חזרה לתיקון החתימה</button>
@@ -119,13 +120,13 @@
   <!-- step 4: sending / done -->
   <section id="s-send" class="card center hidden">
     <div class="spinner"></div>
-    <div class="muted">שולח את המסמכים החתומים…</div>
+    <div class="muted">שולח את המסמך החתום…</div>
   </section>
   <section id="s-done" class="hidden">
     <div class="card center">
       <div class="big">✅</div>
-      <h2 id="doneTitle">המסמכים נחתמו ונשלחו!</h2>
-      <p class="muted" id="doneMsg">העותק החתום כבר הגיע לעמותה. אפשר גם לשמור עותק לעצמכם או לשלוח אותו בווצאפ.</p>
+      <h2 id="doneTitle">המסמך נחתם ונשלח!</h2>
+      <p class="muted" id="doneMsg">העותק החתום כבר הגיע לשולח. אפשר גם לשמור עותק לעצמכם או לשלוח אותו בווצאפ.</p>
       <div class="err hidden" id="sendErr"></div>
       <button class="btn wa" id="shareBtn">📲 שליחת הקובץ בווצאפ</button>
       <button class="btn sec" id="downloadBtn">⬇️ הורדת הקובץ החתום</button>
@@ -133,37 +134,18 @@
   </section>
 </div>
 
+<script src="stamp.js"></script>
 <script>
 /* ============ הגדרות ============ */
-// כתובת ה-Web App של Apps Script (מסתיימת ב-/exec)
 const API_URL = 'https://script.google.com/macros/s/AKfycbwFUH1vKXzZt00lRwoDGM9oy6j-2bi1amDYhVK-ty4-YktsqMmRoAQvkrOi6_KwC74z/exec';
-
-// מיקומי החתימה והשדות בכל מסמך (נקודות PDF, ראשית בפינה השמאלית התחתונה)
-const LAYOUT = {
-  form1: { sig: [{ page: 3, x: 395, y: 266, w: 92, h: 34 }] },
-  form2: {
-    sig: [{ page: 0, x: 45, y: 144, w: 112, h: 40 }],
-    text: [
-      { page: 0, key: 'date',      x: 62,  y: 663, size: 11 },
-      { page: 0, key: 'branchTop', x: 470, y: 663, size: 11 },
-      { page: 0, key: 'bank',      x: 392, y: 582, size: 11 },
-      { page: 0, key: 'branch',    x: 288, y: 582, size: 11 },
-      { page: 0, key: 'account',   x: 166, y: 582, size: 11 },
-    ],
-    checks: [{ page: 0, key: 'join', x: 562, y: 502, size: 10 }],
-  },
-};
-const INK = [0.1, 0.16, 0.55];
 /* ================================= */
 
 const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const $ = id => document.getElementById(id);
-const token = new URLSearchParams(location.search).get('k') || '';
-let DATA = null;          // { title, docs:[{id,label,b64}], fields:{} }
-let signedBytes = null;   // Uint8Array of final PDF
-let signedName = 'מסמכים חתומים.pdf';
-let sigPageNums = [];  // 1-based page numbers that carry a signature
+const params = new URLSearchParams(location.search);
+const reqId = params.get('r') || '';
+let DATA = null, srcBytes = null, signedBytes = null, signedName = 'מסמך חתום.pdf';
 
 function show(id, step) {
   ['s-load','s-fatal','s-read','s-sign','s-preview','s-send','s-done'].forEach(s => $(s).classList.toggle('hidden', s !== id));
@@ -171,61 +153,38 @@ function show(id, step) {
   $('stepsBar').classList.toggle('hidden', step == null);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function fatal(msg) { if (msg) $('fatalMsg').textContent = msg; show('s-fatal'); }
+function fatal(msg, title, icon) {
+  if (msg) $('fatalMsg').textContent = msg;
+  if (title) $('fatalTitle').textContent = title;
+  if (icon) $('fatalIcon').textContent = icon;
+  show('s-fatal');
+}
 const b64ToBytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 function bytesToB64(bytes) { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
-function todayStr() { const d = new Date(); return [d.getDate(), d.getMonth() + 1, d.getFullYear()].map(n => String(n).padStart(2, '0')).join('/'); }
+const safe = s => String(s || '').replace(/[\\/:*?"<>|]/g, ' ').trim();
 
 /* ---------- load ---------- */
 async function load() {
-  if (!token) return fatal();
+  if (!reqId) return fatal();
   try {
-    const r = await fetch(API_URL + '?k=' + encodeURIComponent(token));
-    const j = await r.json();
-    if (!j.ok) return fatal(j.error === 'bad_token' ? 'הקישור אינו בתוקף. בקשו קישור חדש מהשולח.' : null);
-    DATA = j;
+    const r = await fetch(API_URL + '?action=get&r=' + encodeURIComponent(reqId));
+    DATA = await r.json();
   } catch (e) { return fatal('אין חיבור לשרת כרגע. בדקו את החיבור לאינטרנט ונסו שוב.'); }
-  if (DATA.title) $('subtitle').textContent = DATA.title;
-  signedName = (DATA.fileName || 'מסמכים חתומים') + '.pdf';
-  // pre-filled (unsigned) version for reading
-  const filled = await buildPdf(null);
-  $('docList').innerHTML = DATA.docs.map(d => `<div class="doc"><div class="ic">PDF</div><div><b>${d.label}</b><span class="muted">${d.pageCount === 1 ? 'עמוד אחד' : d.pageCount + ' עמודים'}</span></div></div>`).join('');
-  await renderPdf(filled, $('pages'));
+  if (!DATA.ok) {
+    if (DATA.error === 'already_signed') return fatal('המסמך כבר נחתם ונשלח. אין צורך לחתום שוב.', 'המסמך כבר נחתם', '✅');
+    if (DATA.error === 'cancelled') return fatal('הבקשה לחתימה בוטלה על ידי השולח.', 'הקישור בוטל');
+    return fatal('הקישור אינו בתוקף. בקשו קישור חדש מהשולח.');
+  }
+  $('subtitle').textContent = DATA.title;
+  signedName = safe(DATA.title) + ' - חתום.pdf';
+  srcBytes = b64ToBytes(DATA.pdf);
+  const preview = await Stamp.stamp(srcBytes, DATA.fields, {});   // שדות טקסט קבועים כבר מופיעים
+  const n = await renderPdf(preview, $('pages'));
+  $('docList').innerHTML = `<div class="doc"><div class="ic">PDF</div><div><b>${esc(DATA.title)}</b><span class="muted">${n === 1 ? 'עמוד אחד' : n + ' עמודים'}</span></div></div>`;
+  if (DATA.recipient) $('fullName').value = DATA.recipient;
   show('s-read', 1);
 }
-
-/* ---------- build final pdf ---------- */
-async function buildPdf(sigPng) {
-  const { PDFDocument, StandardFonts, rgb } = PDFLib;
-  const out = await PDFDocument.create();
-  const font = await out.embedFont(StandardFonts.Helvetica);
-  const color = rgb(...INK);
-  const sig = sigPng ? await out.embedPng(sigPng) : null;
-  const vals = Object.assign({ date: todayStr() }, DATA.fields || {});
-  sigPageNums = [];
-  for (const d of DATA.docs) {
-    const src = await PDFDocument.load(b64ToBytes(d.b64));
-    const pages = await out.copyPages(src, src.getPageIndices());
-    const L = LAYOUT[d.id] || {};
-    const offset = out.getPageCount();
-    d.pageCount = pages.length;
-    (L.sig || []).forEach(s => sigPageNums.push(offset + s.page + 1));
-    pages.forEach((p, i) => {
-      out.addPage(p);
-      (L.text || []).filter(t => t.page === i && vals[t.key]).forEach(t =>
-        p.drawText(String(vals[t.key]), { x: t.x, y: t.y, size: t.size, font, color }));
-      (L.checks || []).filter(c => c.page === i && vals[c.key]).forEach(c =>
-        p.drawText('X', { x: c.x, y: c.y, size: c.size, font, color }));
-      if (sig) (L.sig || []).filter(s => s.page === i).forEach(s => {
-        const r = Math.min(s.w / sig.width, s.h / sig.height);
-        const w = sig.width * r, h = sig.height * r;
-        p.drawImage(sig, { x: s.x + (s.w - w) / 2, y: s.y, width: w, height: h });
-      });
-    });
-  }
-  out.setTitle(DATA.fileName || 'מסמכים חתומים');
-  return await out.save();
-}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 async function renderPdf(bytes, container, onlyPages) {
   container.innerHTML = '';
@@ -239,15 +198,16 @@ async function renderPdf(bytes, container, onlyPages) {
     container.appendChild(c);
     await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
   }
+  return pdf.numPages;
 }
 
 /* ---------- step 1 ---------- */
 $('toggleView').onclick = () => {
   const hidden = $('pages').classList.toggle('hidden');
-  $('toggleView').textContent = hidden ? '📄 הצגת המסמכים' : 'הסתרת המסמכים';
+  $('toggleView').textContent = hidden ? '📄 הצגת המסמך' : 'הסתרת המסמך';
 };
 $('readOk').onchange = e => $('toSign').disabled = !e.target.checked;
-$('toSign').onclick = () => { show('s-sign', 2); sizePad(); };
+$('toSign').onclick = () => { show('s-sign', 2); sizePad(); validateSign(); };
 
 /* ---------- step 2: signature pad ---------- */
 const pad = $('pad'), ctx = pad.getContext('2d');
@@ -276,7 +236,6 @@ $('fullName').oninput = validateSign;
 function validateSign() { $('toPreview').disabled = !(hasInk && $('fullName').value.trim().length >= 2); }
 $('backRead').onclick = () => show('s-read', 1);
 
-// crop signature to its ink and export as PNG bytes
 function signaturePng() {
   const w = pad.width, h = pad.height, d = ctx.getImageData(0, 0, w, h).data;
   let x0 = w, y0 = h, x1 = 0, y1 = 0;
@@ -290,31 +249,33 @@ function signaturePng() {
 $('toPreview').onclick = async () => {
   $('toPreview').disabled = true; $('toPreview').textContent = 'מכין…';
   try {
-    signedBytes = await buildPdf(signaturePng());
-    // show only pages that carry a signature
-    await renderPdf(signedBytes, $('previewPages'), sigPageNums.length ? sigPageNums : null);
+    signedBytes = await Stamp.stamp(srcBytes, DATA.fields, { sigPng: signaturePng(), name: $('fullName').value.trim() });
+    const sigPages = [...new Set(DATA.fields.filter(f => f.type === 'sig').map(f => f.page + 1))].sort((a, b) => a - b);
+    await renderPdf(signedBytes, $('previewPages'), sigPages.length ? sigPages : null);
     show('s-preview', 3);
   } catch (e) { alert('אירעה שגיאה בהכנת המסמך. נסו שוב.'); console.error(e); }
   $('toPreview').textContent = 'המשך'; validateSign();
 };
 $('backSign').onclick = () => { show('s-sign', 2); sizePad(); };
 
-/* ---------- step 3 → send ---------- */
+/* ---------- send ---------- */
 $('send').onclick = async () => {
   show('s-send', 4);
-  let ok = false;
+  let res = null;
   try {
     const r = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ k: token, name: $('fullName').value.trim(), pdf: bytesToB64(signedBytes), ua: navigator.userAgent, at: new Date().toISOString() }),
+      body: JSON.stringify({ action: 'sign', r: reqId, name: $('fullName').value.trim(), pdf: bytesToB64(signedBytes), ua: navigator.userAgent, at: new Date().toISOString() }),
     });
-    ok = (await r.json()).ok === true;
+    res = await r.json();
   } catch (e) { console.error(e); }
-  if (!ok) {
-    $('doneTitle').textContent = 'המסמכים נחתמו';
+  if (!res || !res.ok) {
+    $('doneTitle').textContent = 'המסמך נחתם';
     $('doneMsg').textContent = '';
-    $('sendErr').textContent = 'לא הצלחנו לשלוח את הקובץ אוטומטית. אנא שלחו אותו בווצאפ בכפתור למטה.';
+    $('sendErr').textContent = res && res.error === 'not_pending'
+      ? 'המסמך הזה כבר נחתם קודם לכן. אפשר לשמור את העותק הזה לעצמכם.'
+      : 'לא הצלחנו לשלוח את הקובץ אוטומטית. אנא שלחו אותו בווצאפ בכפתור למטה.';
     $('sendErr').classList.remove('hidden');
   }
   show('s-done', 4);
@@ -325,7 +286,7 @@ function signedFile() { return new File([signedBytes], signedName, { type: 'appl
 $('shareBtn').onclick = async () => {
   const f = signedFile();
   if (navigator.canShare && navigator.canShare({ files: [f] })) {
-    try { await navigator.share({ files: [f], title: signedName }); } catch (e) { /* user cancelled */ }
+    try { await navigator.share({ files: [f], title: signedName }); } catch (e) { /* בוטל */ }
   } else {
     download();
     alert('הקובץ ירד לטלפון. עכשיו פתחו את הווצאפ וצרפו אותו מתיקיית ההורדות.');

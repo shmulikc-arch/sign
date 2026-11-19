@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ניהול חתימות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root { --ink:#1a2a8c; --bg:#f4f6fb; --card:#fff; --text:#1d2433; --muted:#6b7385; --line:#e3e7f0; --ok:#1f9d55; --warn:#c77700; --bad:#b42318; --wa:#25d366; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Heebo',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:16px; line-height:1.5; }
+  .wrap { max-width:960px; margin:0 auto; padding:16px; }
+  .top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .top h1 { font-size:22px; margin:0; }
+  .card { background:var(--card); border-radius:14px; padding:16px; box-shadow:0 2px 10px rgba(20,30,80,.06); margin-bottom:12px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border:0; border-radius:10px; padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; background:var(--ink); color:#fff; text-decoration:none; white-space:nowrap; }
+  .btn.sec { background:#eef1fb; color:var(--ink); }
+  .btn.wa { background:var(--wa); color:#fff; }
+  .btn.ghost { background:none; color:var(--muted); font-weight:500; padding:8px 10px; }
+  .btn.sm { padding:7px 11px; font-size:14px; border-radius:8px; }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn.block { width:100%; padding:13px; font-size:17px; }
+  input[type=text], input[type=password], input[type=tel] { width:100%; font:inherit; padding:11px 12px; border:1.5px solid var(--line); border-radius:10px; background:#fff; }
+  input:focus { outline:none; border-color:var(--ink); }
+  label.f { display:block; margin:10px 0 4px; font-weight:500; font-size:15px; }
+  .muted { color:var(--muted); font-size:14px; }
+  .hidden { display:none !important; }
+  .login { max-width:360px; margin:12vh auto 0; }
+  .err { background:#fdecec; color:var(--bad); border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
+  .tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .tabs button { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 14px; font:inherit; cursor:pointer; }
+  .tabs button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .item { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+  .item .info b { font-size:16px; }
+  .item .acts { display:flex; gap:6px; flex-wrap:wrap; }
+  .badge { display:inline-block; border-radius:999px; padding:1px 10px; font-size:13px; font-weight:700; margin-inline-start:6px; vertical-align:2px; }
+  .badge.p { background:#fff4e0; color:var(--warn); }
+  .badge.s { background:#e3f6ea; color:var(--ok); }
+  .badge.c { background:#eee; color:#777; }
+  .empty { text-align:center; padding:40px 10px; color:var(--muted); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  @media (max-width:600px) { .grid2 { grid-template-columns:1fr; } }
+  .drop { border:2px dashed #b9c1d9; border-radius:12px; padding:22px; text-align:center; cursor:pointer; background:#fafbff; margin-top:12px; }
+  .drop.has { border-style:solid; border-color:var(--ink); }
+  /* editor */
+  .toolbar { position:sticky; top:0; z-index:20; background:var(--card); border-radius:14px; padding:10px; box-shadow:0 2px 10px rgba(20,30,80,.10); margin-bottom:12px; }
+  .tools { display:flex; gap:6px; flex-wrap:wrap; }
+  .tools button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:8px 12px; font:inherit; cursor:pointer; }
+  .tools button.on { border-color:var(--ink); background:#eef1fb; color:var(--ink); font-weight:700; }
+  .tbar2 { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .pagewrap { position:relative; margin:0 auto 14px; max-width:760px; box-shadow:0 1px 6px rgba(0,0,0,.15); background:#fff; cursor:crosshair; user-select:none; touch-action:manipulation; }
+  .pagewrap canvas { display:block; width:100%; }
+  .pagenum { position:absolute; top:6px; left:8px; font-size:12px; color:#999; pointer-events:none; }
+  .fld { position:absolute; border:2px solid; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:move; touch-action:none; overflow:visible; }
+  .fld.sig { border-color:#1a2a8c; background:rgba(26,42,140,.10); color:#1a2a8c; }
+  .fld.date { border-color:#0e7a4a; background:rgba(14,122,74,.10); color:#0e7a4a; }
+  .fld.name { border-color:#8a3ffc; background:rgba(138,63,252,.10); color:#8a3ffc; }
+  .fld.text { border-color:#c77700; background:rgba(199,119,0,.10); color:#c77700; }
+  .fld.check { border-color:#b42318; background:rgba(180,35,24,.10); color:#b42318; }
+  .fld input { width:100%; height:100%; border:0; background:transparent; font:inherit; font-weight:500; color:#222; padding:0 3px; text-align:right; cursor:text; }
+  .fld .x { position:absolute; top:-11px; left:-11px; width:22px; height:22px; border-radius:50%; background:#fff; border:1.5px solid currentColor; color:inherit; font-size:13px; line-height:18px; text-align:center; cursor:pointer; }
+  .fld .rs { position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:3px; background:currentColor; cursor:nwse-resize; }
+  .result { text-align:center; }
+  .linkbox { direction:ltr; background:#f1f3f9; border-radius:10px; padding:10px; font-size:14px; word-break:break-all; margin:12px 0; user-select:all; }
+  .spinner { width:38px; height:38px; border:4px solid #dfe4f2; border-top-color:var(--ink); border-radius:50%; animation:sp .9s linear infinite; margin:30px auto; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1d2433; color:#fff; padding:10px 18px; border-radius:10px; font-size:15px; z-index:99; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- login -->
+  <section id="v-login" class="login card">
+    <h1 style="margin:0 0 4px;font-size:22px">ניהול חתימות</h1>
+    <p class="muted" style="margin:0 0 10px">כניסה לאזור הניהול</p>
+    <label class="f" for="pw">סיסמה</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px"><input type="checkbox" id="remember" checked> לזכור אותי במכשיר הזה</label>
+    <button class="btn block" id="loginBtn" style="margin-top:14px">כניסה</button>
+    <div class="err hidden" id="loginErr"></div>
+  </section>
+
+  <!-- list -->
+  <section id="v-list" class="hidden">
+    <div class="top">
+      <h1>בקשות חתימה</h1>
+      <div style="display:flex;gap:6px">
+        <button class="btn ghost" id="logout">יציאה</button>
+        <button class="btn sec" id="refresh">↻ רענון</button>
+        <button class="btn" id="newBtn">＋ בקשה חדשה</button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-f="all" class="on">הכול</button>
+      <button data-f="ממתין">ממתינים</button>
+      <button data-f="נחתם">נחתמו</button>
+      <button data-f="בוטל">בוטלו</button>
+    </div>
+    <div id="list"><div class="spinner"></div></div>
+  </section>
+
+  <!-- new: details -->
+  <section id="v-new" class="hidden">
+    <div class="top"><h1>בקשה חדשה</h1><button class="btn ghost" data-back>→ חזרה לרשימה</button></div>
+    <div class="card">
+      <label class="f" for="nTitle">שם המסמך *</label>
+      <input type="text" id="nTitle" placeholder="לדוגמה: הסכם התנדבות">
+      <div class="grid2">
+        <div><label class="f" for="nRecipient">שם החותם/ת</label><input type="text" id="nRecipient" placeholder="ימולא מראש בדף החתימה"></div>
+        <div><label class="f" for="nPhone">טלפון (לשליחה בווצאפ)</label><input type="tel" id="nPhone" placeholder="050-0000000" dir="ltr" style="text-align:right"></div>
+      </div>
+      <div class="drop" id="drop">
+        <div style="font-size:30px">📄</div>
+        <b id="dropTitle">בחירת קובץ PDF או תמונה</b>
+        <div class="muted" id="dropSub">אפשר לבחור כמה קבצים – הם יאוחדו למסמך אחד לפי סדר הבחירה</div>
+      </div>
+      <input type="file" id="file" accept="application/pdf,image/*" multiple class="hidden">
+      <button class="btn block" id="toEditor" disabled style="margin-top:14px">המשך – סימון מקומות החתימה</button>
+    </div>
+  </section>
+
+  <!-- new: editor -->
+  <section id="v-editor" class="hidden">
+    <div class="toolbar">
+      <div class="tools" id="tools">
+        <button data-t="sig" class="on">✍️ חתימה</button>
+        <button data-t="date">📅 תאריך</button>
+        <button data-t="name">👤 שם החותם</button>
+        <button data-t="text">🔤 טקסט קבוע</button>
+        <button data-t="check">✖ סימון X</button>
+      </div>
+      <div class="tbar2">
+        <span class="muted" id="hint">בחרו סוג שדה ולחצו על המסמך במקום הרצוי. אפשר לגרור, לשנות גודל מהפינה ולמחוק ב-×.</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn ghost sm" id="edBack">→ חזרה</button>
+          <button class="btn sm" id="create" disabled>צור קישור</button>
+        </div>
+      </div>
+    </div>
+    <div id="editorPages"></div>
+  </section>
+
+  <!-- saving / result -->
+  <section id="v-saving" class="card hidden" style="text-align:center"><div class="spinner"></div><div class="muted">יוצר את הקישור…</div></section>
+  <section id="v-result" class="hidden">
+    <div class="card result">
+      <div style="font-size:46px">🔗</div>
+      <h2 style="margin:4px 0">הקישור מוכן!</h2>
+      <p class="muted" id="resTitle"></p>
+      <div class="linkbox" id="resLink"></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" id="resCopy">📋 העתקת הקישור</button>
+        <a class="btn wa" id="resWa" target="_blank" rel="noopener">📲 שליחה בווצאפ</a>
+      </div>
+      <button class="btn ghost" data-back style="margin-top:14px">→ חזרה לרשימה</button>
+    </div>
+  </section>
+</div>
+
+<script src="stamp.js"></script>
+<script>
+/* ============ הגדרות ============ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwFUH1vKXzZt00lRwoDGM9oy6j-2bi1amDYhVK-ty4-YktsqMmRoAQvkrOi6_KwC74z/exec';
+/* ================================= */
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LABEL = { sig: 'חתימה', date: 'תאריך', name: 'שם החותם', text: '', check: 'X' };
+const SIZE = { sig: [130, 45], date: [80, 16], name: [120, 16], text: [100, 16], check: [12, 12] };
+
+let PW = '';
+let ITEMS = [], FILTER = 'all';
+let docBytes = null;      // המסמך הממוזג
+let pageInfo = [];        // [{w,h,x0,y0}]
+let fields = [];          // שדות בנקודות PDF
+let tool = 'sig';
+
+const store = {
+  get() { try { return localStorage.getItem('sign_admin_pw') || sessionStorage.getItem('sign_admin_pw') || ''; } catch (e) { return ''; } },
+  set(v, persist) { try { (persist ? localStorage : sessionStorage).setItem('sign_admin_pw', v); } catch (e) {} },
+  clear() { try { localStorage.removeItem('sign_admin_pw'); sessionStorage.removeItem('sign_admin_pw'); } catch (e) {} },
+};
+
+function view(id) {
+  ['v-login', 'v-list', 'v-new', 'v-editor', 'v-saving', 'v-result'].forEach(v => $(v).classList.toggle('hidden', v !== id));
+  window.scrollTo(0, 0);
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+async function api(body) {
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ pw: PW }, body)) });
+  return r.json();
+}
+const b64ToBytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+function bytesToB64(bytes) { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
+
+/* ---------- login ---------- */
+async function login(pw, silent) {
+  $('loginBtn').disabled = true; $('loginErr').classList.add('hidden');
+  PW = pw;
+  let res = null;
+  try { res = await api({ action: 'admin_login' }); } catch (e) {}
+  $('loginBtn').disabled = false;
+  if (res && res.ok) {
+    store.set(pw, $('remember').checked);
+    view('v-list'); loadList();
+    return;
+  }
+  store.clear();
+  if (silent) return view('v-login');
+  const msg = !res ? 'אין חיבור לשרת.' : res.error === 'no_password_set' ? 'לא הוגדרה סיסמה בקוד (ADMIN_PASSWORD).' : 'סיסמה שגויה.';
+  $('loginErr').textContent = msg; $('loginErr').classList.remove('hidden');
+}
+$('loginBtn').onclick = () => login($('pw').value);
+$('pw').onkeydown = e => { if (e.key === 'Enter') login($('pw').value); };
+$('logout').onclick = () => { store.clear(); PW = ''; $('pw').value = ''; view('v-login'); };
+
+/* ---------- list ---------- */
+async function loadList() {
+  $('list').innerHTML = '<div class="spinner"></div>';
+  let res;
+  try { res = await api({ action: 'admin_list' }); } catch (e) { res = null; }
+  if (!res || !res.ok) { $('list').innerHTML = '<div class="card empty">שגיאה בטעינת הרשימה.</div>'; return; }
+  ITEMS = res.items; renderList();
+}
+function fmtDate(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); }
+function waLink(it) {
+  const msg = `שלום${it.recipient ? ' ' + it.recipient : ''}, מצורף קישור לחתימה על "${it.title}":\n${it.link}`;
+  let ph = (it.phone || '').replace(/[^\d]/g, '');
+  if (ph.startsWith('0')) ph = '972' + ph.slice(1);
+  return 'https://wa.me/' + (ph || '') + '?text=' + encodeURIComponent(msg);
+}
+function renderList() {
+  const items = ITEMS.filter(i => FILTER === 'all' || i.status === FILTER);
+  if (!items.length) { $('list').innerHTML = `<div class="card empty">${ITEMS.length ? 'אין בקשות בסינון הזה.' : 'עדיין אין בקשות. לחצו על "בקשה חדשה" כדי להתחיל.'}</div>`; return; }
+  $('list').innerHTML = items.map(it => {
+    const cls = it.status === 'נחתם' ? 's' : it.status === 'בוטל' ? 'c' : 'p';
+    const sub = it.status === 'נחתם'
+      ? `נחתם ע"י ${esc(it.signerName)} · ${fmtDate(it.signedAt)}`
+      : `${it.recipient ? 'עבור ' + esc(it.recipient) + ' · ' : ''}נוצר ${fmtDate(it.created)}`;
+    let acts = '';
+    if (it.status === 'ממתין') acts = `
+        <button class="btn sec sm" data-copy="${it.id}">📋 העתקה</button>
+        <a class="btn wa sm" href="${waLink(it)}" target="_blank" rel="noopener">📲 ווצאפ</a>
+        <button class="btn ghost sm" data-cancel="${it.id}">ביטול</button>`;
+    else if (it.status === 'נחתם') acts = `<a class="btn sm" href="${it.signedUrl}" target="_blank" rel="noopener">📄 הקובץ החתום</a>`;
+    else acts = `<button class="btn ghost sm" data-reopen="${it.id}">שחזור</button>`;
+    return `<div class="card item"><div class="info"><b>${esc(it.title)}</b><span class="badge ${cls}">${it.status}</span><div class="muted">${sub}</div></div><div class="acts">${acts}</div></div>`;
+  }).join('');
+}
+$('list').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const find = id => ITEMS.find(i => i.id === id);
+  if (b.dataset.copy) { await copy(find(b.dataset.copy).link); }
+  if (b.dataset.cancel) { if (!confirm('לבטל את הקישור? מי שיפתח אותו יראה שהבקשה בוטלה.')) return; await api({ action: 'admin_cancel', id: b.dataset.cancel }); loadList(); }
+  if (b.dataset.reopen) { await api({ action: 'admin_reopen', id: b.dataset.reopen }); loadList(); }
+};
+$('tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  FILTER = b.dataset.f; [...$('tabs').children].forEach(x => x.classList.toggle('on', x === b)); renderList();
+};
+$('refresh').onclick = loadList;
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('הקישור הועתק'); }
+  catch (e) { window.prompt('העתיקו את הקישור:', text); }
+}
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { view('v-list'); loadList(); });
+
+/* ---------- new: details + files ---------- */
+$('newBtn').onclick = () => {
+  $('nTitle').value = ''; $('nRecipient').value = ''; $('nPhone').value = '';
+  docBytes = null; fields = []; $('file').value = '';
+  $('drop').classList.remove('has'); $('dropTitle').textContent = 'בחירת קובץ PDF או תמונה';
+  $('dropSub').textContent = 'אפשר לבחור כמה קבצים – הם יאוחדו למסמך אחד לפי סדר הבחירה';
+  checkNew(); view('v-new');
+};
+$('drop').onclick = () => $('file').click();
+$('file').onchange = async () => {
+  const files = [...$('file').files]; if (!files.length) return;
+  $('dropTitle').textContent = 'מעבד…';
+  try {
+    docBytes = await mergeFiles(files);
+    const doc = await PDFLib.PDFDocument.load(docBytes);
+    $('drop').classList.add('has');
+    $('dropTitle').textContent = files.map(f => f.name).join(' + ');
+    $('dropSub').textContent = `${doc.getPageCount()} עמודים · לחצו כדי להחליף`;
+    if (!$('nTitle').value.trim()) $('nTitle').value = files[0].name.replace(/\.[^.]+$/, '');
+  } catch (e) {
+    console.error(e); docBytes = null;
+    $('dropTitle').textContent = 'לא הצלחתי לקרוא את הקובץ. נסו קובץ אחר.';
+  }
+  fields = []; checkNew();
+};
+['nTitle'].forEach(id => $(id).oninput = checkNew);
+function checkNew() { $('toEditor').disabled = !(docBytes && $('nTitle').value.trim()); }
+
+async function mergeFiles(files) {
+  const { PDFDocument } = PDFLib;
+  const out = await PDFDocument.create();
+  for (const f of files) {
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+      const src = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      (await out.copyPages(src, src.getPageIndices())).forEach(p => out.addPage(p));
+    } else {
+      const png = await toPng(f);                      // כל סוג תמונה → PNG
+      const img = await out.embedPng(png);
+      const A4 = [595.28, 841.89], m = 20;
+      const r = Math.min((A4[0] - 2 * m) / img.width, (A4[1] - 2 * m) / img.height);
+      const page = out.addPage(A4);
+      const w = img.width * r, h = img.height * r;
+      page.drawImage(img, { x: (A4[0] - w) / 2, y: (A4[1] - h) / 2, width: w, height: h });
+    }
+  }
+  return await out.save();
+}
+function toPng(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const max = 2200, r = Math.min(1, max / Math.max(im.width, im.height));
+      const c = document.createElement('canvas'); c.width = im.width * r; c.height = im.height * r;
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      res(b64ToBytes(c.toDataURL('image/png').split(',')[1]));
+    };
+    im.onerror = rej; im.src = url;
+  });
+}
+
+/* ---------- editor ---------- */
+$('toEditor').onclick = async () => {
+  view('v-editor');
+  $('editorPages').innerHTML = '<div class="spinner"></div>';
+  const pdf = await pdfjsLib.getDocument({ data: docBytes.slice(0), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/' }).promise;
+  $('editorPages').innerHTML = '';
+  pageInfo = [];
+  for (let n = 1; n <= pdf.numPages; n++) {
+    const page = await pdf.getPage(n);
+    const [x0, y0, x1, y1] = page.view;
+    pageInfo.push({ w: x1 - x0, h: y1 - y0, x0, y0 });
+    const vp = page.getViewport({ scale: 1.8 });
+    const wrap = document.createElement('div');
+    wrap.className = 'pagewrap'; wrap.dataset.page = n - 1; wrap.dir = 'ltr';
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    wrap.appendChild(c);
+    const num = document.createElement('div'); num.className = 'pagenum'; num.textContent = `עמוד ${n} מתוך ${pdf.numPages}`;
+    wrap.appendChild(num);
+    $('editorPages').appendChild(wrap);
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    wrap.addEventListener('click', onPageClick);
+  }
+  drawFields();
+};
+$('edBack').onclick = () => view('v-new');
+$('tools').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  tool = b.dataset.t; [...$('tools').children].forEach(x => x.classList.toggle('on', x === b));
+};
+
+function onPageClick(e) {
+  if (e.target.closest('.fld')) return;
+  const wrap = e.currentTarget, page = +wrap.dataset.page, P = pageInfo[page];
+  const r = wrap.getBoundingClientRect();
+  const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+  const [w, h] = SIZE[tool];
+  let x = P.x0 + fx * P.w - w / 2, y = P.y0 + (1 - fy) * P.h - h / 2;
+  const f = { type: tool, page, x, y, w, h };
+  if (tool === 'text') f.value = '';
+  clamp(f); fields.push(f); drawFields();
+  if (tool === 'text') setTimeout(() => { const inp = document.querySelectorAll('.fld.text input'); inp[inp.length - 1]?.focus(); }, 0);
+}
+function clamp(f) {
+  const P = pageInfo[f.page];
+  f.w = Math.max(8, Math.min(f.w, P.w)); f.h = Math.max(8, Math.min(f.h, P.h));
+  f.x = Math.max(P.x0, Math.min(f.x, P.x0 + P.w - f.w));
+  f.y = Math.max(P.y0, Math.min(f.y, P.y0 + P.h - f.h));
+}
+function drawFields() {
+  document.querySelectorAll('.fld').forEach(el => el.remove());
+  fields.forEach((f, i) => {
+    const P = pageInfo[f.page];
+    const wrap = document.querySelector(`.pagewrap[data-page="${f.page}"]`); if (!wrap) return;
+    const el = document.createElement('div');
+    el.className = 'fld ' + f.type; el.dataset.i = i;
+    Object.assign(el.style, {
+      left: ((f.x - P.x0) / P.w * 100) + '%', bottom: ((f.y - P.y0) / P.h * 100) + '%',
+      width: (f.w / P.w * 100) + '%', height: (f.h / P.h * 100) + '%',
+    });
+    if (f.type === 'text') {
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = f.value || ''; inp.placeholder = 'הקלידו טקסט';
+      inp.oninput = () => { f.value = inp.value; };
+      inp.onpointerdown = ev => ev.stopPropagation();
+      el.appendChild(inp);
+    } else {
+      el.appendChild(document.createTextNode(LABEL[f.type]));
+    }
+    const x = document.createElement('div'); x.className = 'x'; x.textContent = '×';
+    x.onpointerdown = ev => ev.stopPropagation();
+    x.onclick = ev => { ev.stopPropagation(); fields.splice(i, 1); drawFields(); };
+    const rs = document.createElement('div'); rs.className = 'rs';
+    el.append(x, rs);
+    el.addEventListener('pointerdown', ev => startDrag(ev, f, el, ev.target === rs ? 'resize' : 'move'));
+    el.addEventListener('click', ev => ev.stopPropagation());
+    wrap.appendChild(el);
+  });
+  const nSig = fields.filter(f => f.type === 'sig').length;
+  $('create').disabled = nSig === 0;
+  $('hint').textContent = nSig ? `${fields.length} שדות (${nSig} חתימות). גררו להזזה, פינה לשינוי גודל, × למחיקה.` : 'בחרו סוג שדה ולחצו על המסמך במקום הרצוי. חובה לפחות שדה חתימה אחד.';
+}
+function startDrag(ev, f, el, mode) {
+  ev.preventDefault(); ev.stopPropagation();
+  const wrap = el.parentElement, r = wrap.getBoundingClientRect(), P = pageInfo[f.page];
+  const sx = ev.clientX, sy = ev.clientY, start = { ...f };
+  const ptX = P.w / r.width, ptY = P.h / r.height;
+  el.setPointerCapture(ev.pointerId);
+  const move = e => {
+    const dx = (e.clientX - sx) * ptX, dy = (e.clientY - sy) * ptY;
+    if (mode === 'move') { f.x = start.x + dx; f.y = start.y - dy; }
+    else { f.w = start.w + dx; f.h = start.h + dy; f.y = start.y - dy; }
+    if (mode === 'resize' && f.h < 8) { f.y -= 8 - f.h; f.h = 8; }
+    clamp(f);
+    Object.assign(el.style, {
+      left: ((f.x - P.x0) / P.w * 100) + '%', bottom: ((f.y - P.y0) / P.h * 100) + '%',
+      width: (f.w / P.w * 100) + '%', height: (f.h / P.h * 100) + '%',
+    });
+  };
+  const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+  el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+}
+
+/* ---------- create ---------- */
+$('create').onclick = async () => {
+  const empty = fields.find(f => f.type === 'text' && !(f.value || '').trim());
+  if (empty && !confirm('יש שדה טקסט ריק. להמשיך בלעדיו?')) return;
+  const clean = fields.filter(f => !(f.type === 'text' && !(f.value || '').trim()))
+    .map(f => ({ type: f.type, page: f.page, x: +f.x.toFixed(2), y: +f.y.toFixed(2), w: +f.w.toFixed(2), h: +f.h.toFixed(2), ...(f.type === 'text' ? { value: f.value.trim() } : {}) }));
+  view('v-saving');
+  let res = null;
+  try {
+    res = await api({ action: 'admin_create', title: $('nTitle').value.trim(), recipient: $('nRecipient').value.trim(), phone: $('nPhone').value.trim(), pdf: bytesToB64(docBytes), fields: clean });
+  } catch (e) { console.error(e); }
+  if (!res || !res.ok) { alert('יצירת הקישור נכשלה' + (res && res.error ? ': ' + res.error : '') + '. נסו שוב.'); view('v-editor'); return; }
+  const it = { title: $('nTitle').value.trim(), recipient: $('nRecipient').value.trim(), phone: $('nPhone').value.trim(), link: res.link };
+  $('resTitle').textContent = it.title + (it.recipient ? ' · עבור ' + it.recipient : '');
+  $('resLink').textContent = res.link;
+  $('resWa').href = waLink(it);
+  $('resCopy').onclick = () => copy(res.link);
+  view('v-result');
+};
+
+/* ---------- start ---------- */
+const saved = store.get();
+if (saved) { $('pw').value = saved; login(saved, true); } else view('v-login');
+</script>
+</body>
+</html>
